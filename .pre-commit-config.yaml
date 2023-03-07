@@ -1,0 +1,36 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: check-yaml
+  - id: check-json
+  - id: end-of-file-fixer
+  - id: mixed-line-ending
+  - id: trailing-whitespace
+  - id: no-commit-to-branch
+- repo: local
+  hooks:
+  - id: format
+    name: Formatting - isort
+    entry: poetry run python -m isort
+    pass_filenames: true
+    language: system
+    types: [python]
+  - id: format
+    name: Formatting - black
+    entry: poetry run python -m black
+    pass_filenames: true
+    language: system
+    types: [python]
+  - id: lint
+    name: Linting - flake8
+    entry: poetry run python -m flake8
+    pass_filenames: true
+    language: system
+    types: [python]
+  - id: lint
+    name: Linting - mypy
+    entry: poetry run python -m mypy
+    pass_filenames: true
+    language: system
+    types: [python]
