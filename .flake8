@@ -1,0 +1,22 @@
+[flake8]
+select = ANN,B,B9,BLK,C,E,F,I,S,W
+
+exclude =
+  .venv
+
+application-import-names = main,instancesegmentation,tests
+
+max-complexity = 10
+max-line-length = 130
+import-order-style = google
+docstring-convention = google
+
+per-file-ignores =
+  # S101: use of assert detected, okay for tests
+  tests/*:S101
+
+# global ignores:
+# ANN002 missing type annotation for *args
+# ANN003 missing type annotation for **kwargs
+# ANN101 missing type annotation for self in method
+ignore = ANN002, ANN003, ANN101
