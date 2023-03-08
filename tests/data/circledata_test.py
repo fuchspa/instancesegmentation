@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from instancesegmentation.data.circle_data import (
+from instancesegmentation.data.circledata import (
     BackgroundProperties,
     CircleProperties,
     create_data_point,

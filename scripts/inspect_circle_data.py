@@ -6,7 +6,7 @@ import numpy as np
 from skimage.color import label2rgb
 import typer
 
-from instancesegmentation.data.circle_data import (
+from instancesegmentation.data.circledata import (
     BackgroundProperties,
     CircleProperties,
     create_data_point,
