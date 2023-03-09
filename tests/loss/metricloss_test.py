@@ -1,7 +1,10 @@
-import numpy as np
 import tensorflow as tf
 
-from instancesegmentation.loss.metricloss import compute_centroids, MetricLoss
+from instancesegmentation.loss.metricloss import (
+    compute_centroids,
+    MetricLoss,
+    strictly_upper_triangular_matrix,
+)
 
 
 def test_creating_the_loss_layer() -> None:
@@ -21,10 +24,10 @@ def test_compute_centroids() -> None:
     )
     labels = tf.constant([0, 0, 1, 1, 1, 2], tf.int32)
 
-    centroids = compute_centroids(embeddings, labels).numpy()
+    centroids = compute_centroids(embeddings, labels)
 
-    expected_centroids = np.array([[0.5, 0.5], [0.2, 0.2], [0.4, 0.4]], np.float32)
-    assert np.all(centroids == expected_centroids)
+    expected_centroids = tf.constant([[0.5, 0.5], [0.2, 0.2], [0.4, 0.4]])
+    assert tf.reduce_all(centroids == expected_centroids)
 
 
 def test_compute_centroids_can_deal_with_missing_labels() -> None:
@@ -34,7 +37,36 @@ def test_compute_centroids_can_deal_with_missing_labels() -> None:
     )
     labels = tf.constant([0, 0, 3, 3], tf.int32)
 
-    centroids = compute_centroids(embeddings, labels).numpy()
+    centroids = compute_centroids(embeddings, labels)
 
-    expected_centroids = np.array([[0.5, 0.5], [0.2, 0.2]], np.float32)
-    assert np.all(centroids == expected_centroids)
+    expected_centroids = tf.constant([[0.5, 0.5], [0.2, 0.2]])
+    assert tf.reduce_all(centroids == expected_centroids)
+
+
+def test_strictly_upper_triangular_matrix() -> None:
+    matrix = tf.ones((3, 3))
+
+    triu = strictly_upper_triangular_matrix(matrix)
+
+    expected_matrix = tf.constant([[0.0, 1.0, 1.0], [0.0, 0.0, 1.0], [0.0, 0.0, 0.0]])
+    assert triu.dtype == matrix.dtype
+    assert tf.reduce_all(triu == expected_matrix)
+
+
+def test_compute_push_loss() -> None:
+    push_margin = 0.25
+    metric_loss = MetricLoss(push_margin=push_margin)
+    centroids = tf.constant([[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+
+    loss = metric_loss._compute_push_loss(centroids)
+    assert tf.math.abs(loss - push_margin * push_margin) < 1e-7
+
+    centroids = tf.constant([[0.0, 0.0, 0.0], [1.0, 1.0, 1.0]])
+
+    loss = metric_loss._compute_push_loss(centroids)
+    assert tf.math.abs(loss) < 1e-7
+
+    centroids = tf.constant([[0.0, 0.0], [0.25, 0.0], [0.1, 0.0]])
+
+    loss = metric_loss._compute_push_loss(centroids)
+    assert tf.math.abs(loss) - 0.010833333 < 1e-7
