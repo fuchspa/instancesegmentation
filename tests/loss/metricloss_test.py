@@ -20,9 +20,21 @@ def test_compute_centroids() -> None:
         dtype=tf.float32,
     )
     labels = tf.constant([0, 0, 1, 1, 1, 2], tf.int32)
-    expected_centroids = np.array([[0.5, 0.5], [0.2, 0.2], [0.4, 0.4]], np.float32)
 
     centroids = compute_centroids(embeddings, labels).numpy()
 
-    assert centroids.shape == (3, 2)
+    expected_centroids = np.array([[0.5, 0.5], [0.2, 0.2], [0.4, 0.4]], np.float32)
+    assert np.all(centroids == expected_centroids)
+
+
+def test_compute_centroids_can_deal_with_missing_labels() -> None:
+    embeddings = tf.constant(
+        [[1.0, 1.0], [0.0, 0.0], [0.1, 0.3], [0.3, 0.1]],
+        dtype=tf.float32,
+    )
+    labels = tf.constant([0, 0, 3, 3], tf.int32)
+
+    centroids = compute_centroids(embeddings, labels).numpy()
+
+    expected_centroids = np.array([[0.5, 0.5], [0.2, 0.2]], np.float32)
     assert np.all(centroids == expected_centroids)
