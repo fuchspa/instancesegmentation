@@ -10,8 +10,8 @@ from instancesegmentation.loss.errormetric import (
 )
 
 # It is okay to use these as defaults, as they have no internal state
-_default_distance_measure = ManhattanDistanceMetric()
-_default_error_measure = SquaredErrorMetric()
+_default_distance_metric = ManhattanDistanceMetric()
+_default_error_metric = SquaredErrorMetric()
 
 
 def strictly_upper_triangular_matrix(x: tf.Tensor) -> tf.Tensor:
@@ -57,14 +57,16 @@ class MetricLoss(tf.keras.layers.Layer):
 
     def __init__(
         self,
-        push_distance_metric: DistanceMetric = _default_distance_measure,
-        pull_distance_metric: DistanceMetric = _default_distance_measure,
-        push_error_metric: ErrorMetric = _default_error_measure,
-        pull_error_metric: ErrorMetric = _default_error_measure,
+        push_distance_metric: DistanceMetric = _default_distance_metric,
+        pull_distance_metric: DistanceMetric = _default_distance_metric,
+        push_error_metric: ErrorMetric = _default_error_metric,
+        pull_error_metric: ErrorMetric = _default_error_metric,
         push_margin: float = 0.25,
         pull_margin: float = 0.0,
         push_weight: float = 1.0,
-        pull_weight: float = 0.1,
+        pull_weight: float = 1.0,
+        regularization_error_metric: ErrorMetric = _default_error_metric,
+        regularization_weight: float = 1e-4,
         name: str = "MetricLoss",
         **kwargs,
     ) -> None:
@@ -77,6 +79,8 @@ class MetricLoss(tf.keras.layers.Layer):
         self.pull_margin = pull_margin
         self.push_weight = push_weight
         self.pull_weight = pull_weight
+        self.regularization_error_metric = regularization_error_metric
+        self.regularization_weight = regularization_weight
 
     def _compute_push_loss(self, centroids: tf.Tensor) -> tf.Tensor:
         """Push apart the different cluster centroids."""
@@ -103,6 +107,11 @@ class MetricLoss(tf.keras.layers.Layer):
         loss = self.pull_error_metric(distances)
         return tf.math.reduce_mean(loss)
 
+    def _compute_regularization_loss(self, centroids: tf.Tensor) -> tf.Tensor:
+        """Compute the distance to zero to prevent centroids from drifting too far away."""
+        loss = self.regularization_error_metric(centroids)
+        return tf.math.reduce_mean(loss)
+
     def call(self, embeddings: tf.Tensor, labels: tf.Tensor) -> tf.Tensor:
         embedding_losses = list()
         for embedding, instance_label in zip(embeddings, labels):
@@ -115,9 +124,12 @@ class MetricLoss(tf.keras.layers.Layer):
 
             push_loss = self._compute_push_loss(valid_centroids)
             pull_loss = self._compute_pull_loss(embeddings, centroids, labels)
+            regularization_loss = self._compute_regularization_loss(valid_centroids)
 
             embedding_losses.append(
-                self.push_weight * push_loss + self.pull_weight * pull_loss
+                self.push_weight * push_loss
+                + self.pull_weight * pull_loss
+                + self.regularization_weight * regularization_loss
             )
 
         return tf.reduce_mean(embedding_losses)
