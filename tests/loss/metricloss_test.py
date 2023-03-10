@@ -75,6 +75,11 @@ def test_compute_push_loss() -> None:
     loss = metric_loss._compute_push_loss(centroids)
     assert tf.math.abs(loss) - 0.010833333 < 1e-7
 
+    centroids = tf.constant([[5.0, 5.0]])
+
+    loss = metric_loss._compute_push_loss(centroids)
+    assert tf.math.abs(loss) < 1e-7
+
 
 def test_compute_pull_loss() -> None:
     pull_margin = 0.1
