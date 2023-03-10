@@ -24,10 +24,12 @@ def test_compute_centroids() -> None:
     )
     labels = tf.constant([0, 0, 1, 1, 1, 2], tf.int32)
 
-    centroids = compute_centroids(embeddings, labels)
+    centroids, instance_sizes = compute_centroids(embeddings, labels)
 
     expected_centroids = tf.constant([[0.5, 0.5], [0.2, 0.2], [0.4, 0.4]])
+    expected_instance_sizes = tf.constant([2, 3, 1], tf.int32)
     assert tf.reduce_all(centroids == expected_centroids)
+    assert tf.reduce_all(instance_sizes == expected_instance_sizes)
 
 
 def test_compute_centroids_can_deal_with_missing_labels() -> None:
@@ -37,10 +39,12 @@ def test_compute_centroids_can_deal_with_missing_labels() -> None:
     )
     labels = tf.constant([0, 0, 3, 3], tf.int32)
 
-    centroids = compute_centroids(embeddings, labels)
+    centroids, instance_sizes = compute_centroids(embeddings, labels)
 
-    expected_centroids = tf.constant([[0.5, 0.5], [0.2, 0.2]])
+    expected_centroids = tf.constant([[0.5, 0.5], [0.0, 0.0], [0.0, 0.0], [0.2, 0.2]])
+    expected_instance_sizes = tf.constant([2, 0, 0, 2], tf.int32)
     assert tf.reduce_all(centroids == expected_centroids)
+    assert tf.reduce_all(instance_sizes == expected_instance_sizes)
 
 
 def test_strictly_upper_triangular_matrix() -> None:
@@ -70,3 +74,21 @@ def test_compute_push_loss() -> None:
 
     loss = metric_loss._compute_push_loss(centroids)
     assert tf.math.abs(loss) - 0.010833333 < 1e-7
+
+
+def test_compute_pull_loss() -> None:
+    pull_margin = 0.1
+    metric_loss = MetricLoss(pull_margin=pull_margin)
+    embeddings = tf.constant([[0.0, 0.0], [2.0, 0.0], [0.0, 0.0], [0.0, 2.0]])
+    centroids = tf.constant([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+    labels = tf.constant([0, 0, 2, 2])
+
+    loss = metric_loss._compute_pull_loss(embeddings, centroids, labels)
+    assert tf.math.abs(loss - 0.81) < 1e-7
+
+    embeddings = tf.constant([[0.0, 0.0], [0.2, 0.0], [0.0, 0.0], [0.0, 0.2]])
+    centroids = tf.constant([[0.1, 0.0], [0.0, 0.1]])
+    labels = tf.constant([0, 0, 1, 1])
+
+    loss = metric_loss._compute_pull_loss(embeddings, centroids, labels)
+    assert tf.math.abs(loss) < 1e-7
