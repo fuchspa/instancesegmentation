@@ -97,3 +97,28 @@ def test_compute_pull_loss() -> None:
 
     loss = metric_loss._compute_pull_loss(embeddings, centroids, labels)
     assert tf.math.abs(loss) < 1e-7
+
+
+def test_compute_regularization_loss() -> None:
+    metric_loss = MetricLoss()
+    centroids = tf.constant([[0.0, 0.0], [0.0, 0.0], [0.0, 0.0]])
+
+    loss = metric_loss._compute_regularization_loss(centroids)
+    assert tf.math.abs(loss) < 1e-7
+
+    centroids = tf.constant([[1.0, 0.0], [0.0, 0.0], [0.0, 1.0]])
+
+    loss = metric_loss._compute_regularization_loss(centroids)
+    assert tf.math.abs(loss - 2.0 / 6.0) < 1e-7
+
+
+def test_compute_metric_loss() -> None:
+    metric_loss = MetricLoss()
+    embeddings = tf.constant([[[[0.0, 0.0], [2.0, 0.0]], [[0.0, 0.0], [0.0, 2.0]]]])
+    labels = tf.constant([[[0, 0], [2, 2]]])
+
+    loss = metric_loss(embeddings, labels)
+    # push loss == 0.0 (distance > 0.25)
+    # pull loss == 1.0 (all points have distance 1.0 to their centroid)
+    # regularization loss == 2.0 / 4.0 * 1e-4 = 0.00005
+    assert tf.math.abs(loss - 1.00005) < 1e-7

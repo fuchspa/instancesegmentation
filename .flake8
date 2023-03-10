@@ -20,4 +20,5 @@ per-file-ignores =
 # ANN003 missing type annotation for **kwargs
 # ANN101 missing type annotation for self in method
 # B905 zip() without "strict=" parameter, valide only for Python 3.10
-ignore = ANN002, ANN003, ANN101, B905
+# W503 line break before binary operator, introduced by black
+ignore = ANN002, ANN003, ANN101, B905, W503
