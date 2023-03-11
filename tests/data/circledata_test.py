@@ -2,10 +2,12 @@ import numpy as np
 import pytest
 
 from instancesegmentation.data.circledata import (
+    add_white_noise,
     BackgroundProperties,
     CircleProperties,
     create_data_point,
     initialize_empty_image,
+    normalize_data_by_dtype,
     Range,
     select_a_random_position,
     Size,
@@ -66,3 +68,42 @@ def test_create_data_point() -> None:
         for index in range(number_of_circles):
             values = image[label == index + 1]
             assert np.all(values == values[0])
+
+
+def test_normalize_data_by_dtype() -> None:
+    image = np.array(
+        [
+            np.iinfo(np.uint16).min,
+            np.iinfo(np.uint16).max // 2,
+            np.iinfo(np.uint16).max,
+        ],
+        np.uint16,
+    )
+    normalized = normalize_data_by_dtype(image)
+    expected = np.array([0.0, 0.5, 1.0], np.float32)
+    assert normalized.dtype == np.float32
+    assert np.all(np.abs(normalized - expected) < 1e-3)
+
+    image = np.array(
+        [
+            np.iinfo(np.int16).min,
+            0.0,
+            np.iinfo(np.int16).max,
+        ],
+        np.int16,
+    )
+    normalized = normalize_data_by_dtype(image)
+    expected = np.array([0.0, 0.5, 1.0], np.float32)
+    assert normalized.dtype == np.float32
+    assert np.all(np.abs(normalized - expected) < 1e-3)
+
+
+def test_add_white_noise() -> None:
+    np.random.seed(1337)
+    image = np.ones([4, 4], np.float32)
+
+    noisy_image = add_white_noise(image, 0.00)
+    assert np.all(np.abs(noisy_image - 1.0) < 1e-7)
+
+    noisy_image = add_white_noise(image, 0.05)
+    assert np.all(np.abs(noisy_image - 1.0) > 1e-3)
