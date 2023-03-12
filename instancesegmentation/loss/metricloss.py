@@ -115,15 +115,15 @@ class MetricLoss(tf.keras.layers.Layer):
     def call(self, embeddings: tf.Tensor, labels: tf.Tensor) -> tf.Tensor:
         embedding_losses = list()
         for embedding, instance_label in zip(embeddings, labels):
-            instance_label = tf.cast(tf.reshape(instance_label, -1), tf.int32)
+            instance_label = tf.reshape(instance_label, -1)
             embedding = tf.reshape(embedding, (-1, embedding.shape[-1]))
             centroids, instance_sizes = compute_centroids(embedding, instance_label)
             valid_centroids = tf.gather(
-                centroids, tf.squeeze(tf.where((instance_sizes > 0)))
+                centroids, tf.squeeze(tf.where((instance_sizes > 0)), axis=-1)
             )
 
             push_loss = self._compute_push_loss(valid_centroids)
-            pull_loss = self._compute_pull_loss(embeddings, centroids, labels)
+            pull_loss = self._compute_pull_loss(embedding, centroids, instance_label)
             regularization_loss = self._compute_regularization_loss(valid_centroids)
 
             embedding_losses.append(

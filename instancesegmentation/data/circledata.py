@@ -106,7 +106,7 @@ def example_data_generator() -> Iterator[tuple[NDArray, NDArray, NDArray]]:
         image = (image - image.min()) / (image.max() - image.min())
 
         image = np.expand_dims(image, axis=2)
-        instance_label = np.expand_dims(label.astype(np.float32), axis=2)
+        instance_label = np.expand_dims(label.astype(np.int32), axis=2)
         segmentation_label = np.expand_dims((label > 0).astype(np.float32), axis=2)
 
         yield image, instance_label, segmentation_label
