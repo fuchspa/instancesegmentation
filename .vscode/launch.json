@@ -1,0 +1,37 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
+      "name": "Inspect data",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/inspect_circle_data.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "--export-path=.validation_output"
+      ]
+    },
+    {
+      "name": "Train model",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/train_embedding_model.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        ".model",
+        ".report",
+        "--number-of-iterations=1000"
+      ]
+    }
+  ]
+}
