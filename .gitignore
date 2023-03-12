@@ -130,3 +130,5 @@ dmypy.json
 
 # output directories of this repo
 .validation_output
+.model*
+.report*
