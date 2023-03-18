@@ -37,9 +37,11 @@ def cluster_foreground_embeddings(
     Cluster all the pixels belonging to the foreground class to separate instances.
     Background is labeled 0.
     """
+    clusters = np.zeros(segmentation.shape, np.int32)
+    if np.all(segmentation == 0):
+        return clusters
     relevant_embeddings = embeddings[segmentation, :].reshape((-1, 8))
     relevant_clusters = HDBSCAN(metric="manhattan").fit_predict(relevant_embeddings)
-    clusters = np.zeros(segmentation.shape, np.int32)
     clusters[segmentation] = relevant_clusters + 1
     return clusters
 
