@@ -21,6 +21,7 @@ def strictly_upper_triangular_matrix(x: tf.Tensor) -> tf.Tensor:
     return x
 
 
+@tf.function
 def compute_centroids(
     embeddings: tf.Tensor, labels: tf.Tensor
 ) -> tuple[tf.Tensor, tf.Tensor]:
@@ -30,10 +31,10 @@ def compute_centroids(
     Expects embeddings and labels in flattened form, i.e. (n, feature_count) and (n,). Emebddings
     are expected to be floating point values, while the labels are integer values.
     """
-    centroids = list()
-    instance_sizes = list()
-    number_of_instances = tf.math.reduce_max(labels)
-    for i in range(int(number_of_instances) + 1):
+    number_of_instances = tf.math.reduce_max(labels) + 1
+    centroids = tf.TensorArray(tf.float32, size=number_of_instances)
+    instance_sizes = tf.TensorArray(tf.int32, size=number_of_instances)
+    for i in tf.range(number_of_instances):
         mask = labels == i
         instance_size = tf.reduce_sum(tf.cast(mask, tf.int32))
         centroid = (
@@ -41,9 +42,9 @@ def compute_centroids(
             if instance_size > 0
             else tf.zeros_like(embeddings[0, :])
         )
-        centroids.append(centroid)
-        instance_sizes.append(instance_size)
-    return tf.stack(centroids), tf.stack(instance_sizes)
+        centroids = centroids.write(i, centroid)
+        instance_sizes = instance_sizes.write(i, instance_size)
+    return centroids.stack(), instance_sizes.stack()
 
 
 class MetricLoss(tf.keras.layers.Layer):
@@ -115,7 +116,7 @@ class MetricLoss(tf.keras.layers.Layer):
     def call(self, embeddings: tf.Tensor, labels: tf.Tensor) -> tf.Tensor:
         embedding_losses = list()
         for embedding, instance_label in zip(embeddings, labels):
-            instance_label = tf.reshape(instance_label, -1)
+            instance_label = tf.reshape(instance_label, (-1,))
             embedding = tf.reshape(embedding, (-1, embedding.shape[-1]))
             centroids, instance_sizes = compute_centroids(embedding, instance_label)
             valid_centroids = tf.gather(
