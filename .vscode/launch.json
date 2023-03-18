@@ -32,6 +32,18 @@
         ".report",
         "--number-of-iterations=1000"
       ]
+    },
+    {
+      "name": "Predict embeddings",
+      "type": "python",
+      "request": "launch",
+      "program": "scripts/test_instance_segmentation.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        ".model",
+        "--output-path=.validation_output"
+      ]
     }
   ]
 }
