@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 # output directories of this repo
-.validation_output
-.model*
-.report*
+.validation_output/
+.model*/
+.report*/
