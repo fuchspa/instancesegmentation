@@ -14,17 +14,13 @@ from instancesegmentation.model.embeddingmodel import EmbeddingModel
 
 
 def create_test_data() -> tuple[NDArray, NDArray, NDArray]:
-    """
-    Draw a sample from the data distribution.
-    """
+    """Draw a sample from the data distribution."""
     generator = example_data_generator()
-    return generator.__next__()
+    return next(generator)
 
 
 def plot_embeddings(output_path: Path, embeddings: NDArray) -> None:
-    """
-    Arrange the embeddings in a nice grid.
-    """
+    """Arrange the embeddings in a nice grid."""
     embedding_count = embeddings.shape[-1]
     fig, axes = plt.subplots(nrows=embedding_count // 4, ncols=4, figsize=(25, 15))
     for i in range(embedding_count):
@@ -51,9 +47,7 @@ def cluster_foreground_embeddings(
 def plot_instance_segmentation(
     output_path: Path, image: NDArray, clusters: NDArray
 ) -> None:
-    """
-    Colorize the image data according to the assigned labels.
-    """
+    """Colorize the image data according to the assigned labels."""
     fig = plt.figure(figsize=(10, 10))
     plt.imshow(label2rgb(clusters, image[..., 0]))
     plt.savefig(output_path / "clustering.png", dpi=600, bbox_inches="tight")
