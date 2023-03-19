@@ -14,10 +14,11 @@ _default_distance_metric = ManhattanDistanceMetric()
 _default_error_metric = SquaredErrorMetric()
 
 
+@tf.function(input_signature=(tf.TensorSpec(shape=[None, None], dtype=tf.float32),))
 def strictly_upper_triangular_matrix(x: tf.Tensor) -> tf.Tensor:
     """Return the strictly upper triangular matrix of a given matrix."""
     x = tf.linalg.band_part(x, 0, -1)
-    x = tf.linalg.set_diag(x, tf.zeros((x.shape[0],)))
+    x = tf.linalg.set_diag(x, tf.zeros((tf.shape(x)[0],)))
     return x
 
 
@@ -89,7 +90,7 @@ class MetricLoss(tf.keras.layers.Layer):
         if number_of_instances < 2:
             return tf.constant(0.0)
         number_of_comparisons = number_of_instances * (number_of_instances - 1.0) / 2.0
-        centroids = tf.tile(centroids[:, None, :], [1, centroids.shape[0], 1])
+        centroids = tf.tile(centroids[:, tf.newaxis, :], [1, tf.shape(centroids)[0], 1])
         distances = self.push_distance_metric(
             centroids, tf.transpose(centroids, perm=(1, 0, 2))
         )
