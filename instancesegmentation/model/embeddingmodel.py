@@ -121,6 +121,7 @@ class EmbeddingModel(tf.keras.models.Model):
         self.embedding = _build_embedding_head(number_of_embeddings)
         self.segmentation = _build_segmentation_head(number_of_classes)
 
+    @tf.function
     def call(self, x: tf.Tensor) -> tuple[tf.Tensor, tf.Tensor]:
         for layer in self.layers_down:
             x = layer(x)
