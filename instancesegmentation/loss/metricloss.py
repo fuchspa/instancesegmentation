@@ -114,9 +114,12 @@ class MetricLoss(tf.keras.layers.Layer):
         loss = self.regularization_error_metric(centroids)
         return tf.math.reduce_mean(loss)
 
+    @tf.function
     def call(self, embeddings: tf.Tensor, labels: tf.Tensor) -> tf.Tensor:
-        embedding_losses = list()
-        for embedding, instance_label in zip(embeddings, labels):
+        batch_size = tf.shape(embeddings)[0]
+        embedding_losses = tf.TensorArray(tf.float32, size=batch_size)
+        for i in tf.range(batch_size):
+            embedding, instance_label = embeddings[i, ...], labels[i, ...]
             instance_label = tf.reshape(instance_label, (-1,))
             embedding = tf.reshape(embedding, (-1, embedding.shape[-1]))
             centroids, instance_sizes = compute_centroids(embedding, instance_label)
@@ -128,10 +131,11 @@ class MetricLoss(tf.keras.layers.Layer):
             pull_loss = self._compute_pull_loss(embedding, centroids, instance_label)
             regularization_loss = self._compute_regularization_loss(valid_centroids)
 
-            embedding_losses.append(
+            embedding_losses = embedding_losses.write(
+                i,
                 self.push_weight * push_loss
                 + self.pull_weight * pull_loss
-                + self.regularization_weight * regularization_loss
+                + self.regularization_weight * regularization_loss,
             )
 
-        return tf.reduce_mean(embedding_losses)
+        return tf.reduce_mean(embedding_losses.stack())
